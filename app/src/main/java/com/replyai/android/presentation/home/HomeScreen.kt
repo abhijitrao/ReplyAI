@@ -42,7 +42,8 @@ import com.replyai.android.presentation.common.ShareText
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    onHistoryClick: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -52,7 +53,8 @@ fun HomeScreen(
         onToneChanged = viewModel::updateTone,
         onLengthChanged = viewModel::updateResponseLength,
         onGenerate = viewModel::generate,
-        onSettingsClick = onSettingsClick
+        onSettingsClick = onSettingsClick,
+        onHistoryClick = onHistoryClick
     )
 }
 
@@ -63,7 +65,8 @@ private fun HomeContent(
     onToneChanged: (Tone) -> Unit,
     onLengthChanged: (ResponseLength) -> Unit,
     onGenerate: () -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    onHistoryClick: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -87,6 +90,9 @@ private fun HomeContent(
                 )
             }
 
+            TextButton(onClick = onHistoryClick) {
+                Text("History")
+            }
             TextButton(onClick = onSettingsClick) {
                 Text("Settings")
             }
