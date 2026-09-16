@@ -41,7 +41,10 @@ class SettingsRepository(context: Context) {
         return AiSettings(
             mode = mode,
             onlineProvider = provider,
-            onlineModel = preferences.getString(KEY_ONLINE_MODEL, "").orEmpty(),
+            onlineModel = preferences.getString(
+                KEY_ONLINE_MODEL,
+                AiSettings.DEFAULT_ONLINE_MODEL
+            ).orEmpty().ifBlank { AiSettings.DEFAULT_ONLINE_MODEL },
             offlineModelId = preferences.getString(KEY_OFFLINE_MODEL, null)
         )
     }
