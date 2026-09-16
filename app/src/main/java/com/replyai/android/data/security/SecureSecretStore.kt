@@ -1,15 +1,15 @@
 package com.replyai.android.data.security
 
 import android.content.Context
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 import android.util.Base64
 import java.nio.charset.StandardCharsets
+import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
 
 class SecureSecretStore(context: Context) {
 
@@ -17,14 +17,13 @@ class SecureSecretStore(context: Context) {
 
     fun get(key: String): String? {
         val encodedValue = preferences.getString(key, null) ?: return null
-        return runCatching {
-            decrypt(encodedValue)
-        }.getOrNull()
+        return runCatching { decrypt(encodedValue) }.getOrNull()
     }
 
     fun put(key: String, value: String) {
-        val encryptedValue = encrypt(value)
-        preferences.edit().putString(key, encryptedValue).apply()
+        preferences.edit()
+            .putString(key, encrypt(value))
+            .apply()
     }
 
     fun remove(key: String) {
@@ -36,12 +35,7 @@ class SecureSecretStore(context: Context) {
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateSecretKey())
 
         val encrypted = cipher.doFinal(value.toByteArray(StandardCharsets.UTF_8))
-        val iv = cipher.iv
-
-        return Base64.encodeToString(
-            iv + encrypted,
-            Base64.NO_WRAP
-        )
+        return Base64.encodeToString(cipher.iv + encrypted, Base64.NO_WRAP)
     }
 
     private fun decrypt(encodedValue: String): String {
@@ -62,7 +56,7 @@ class SecureSecretStore(context: Context) {
     }
 
     private fun getOrCreateSecretKey(): SecretKey {
-        val keyStore = java.security.KeyStore.getInstance(ANDROID_KEYSTORE).apply {
+        val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply {
             load(null)
         }
 
