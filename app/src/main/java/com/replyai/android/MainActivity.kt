@@ -9,8 +9,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.replyai.android.data.security.SecureSecretStore
-import com.replyai.android.data.settings.SettingsRepository
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.replyai.android.data.AppContainer
+import com.replyai.android.domain.usecase.GenerateReplyUseCase
 import com.replyai.android.presentation.home.HomeScreen
 import com.replyai.android.presentation.home.HomeViewModel
 import com.replyai.android.presentation.settings.SettingsScreen
@@ -19,8 +20,7 @@ import com.replyai.android.ui.theme.ReplyAiTheme
 
 class MainActivity : ComponentActivity() {
 
-    private val settingsRepository by lazy { SettingsRepository(applicationContext) }
-    private val secureSecretStore by lazy { SecureSecretStore(applicationContext) }
+    private val appContainer by lazy { AppContainer(applicationContext) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,18 +29,29 @@ class MainActivity : ComponentActivity() {
             ReplyAiTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     var showSettings by remember { mutableStateOf(false) }
+                    val settings by appContainer.settingsRepository.aiSettings
+                        .collectAsStateWithLifecycle()
 
                     if (showSettings) {
                         SettingsScreen(
-                            viewModel = SettingsViewModel(
-                                repository = settingsRepository,
-                                secureSecretStore = secureSecretStore
-                            ),
+                            viewModel = remember {
+                                SettingsViewModel(
+                                    repository = appContainer.settingsRepository,
+                                    secureSecretStore = appContainer.secureSecretStore
+                                )
+                            },
                             onBack = { showSettings = false }
                         )
                     } else {
+                        val provider = remember(settings) {
+                            appContainer.aiProviderFactory.create(settings)
+                        }
+                        val viewModel = remember(provider) {
+                            HomeViewModel(GenerateReplyUseCase(provider))
+                        }
+
                         HomeScreen(
-                            viewModel = HomeViewModel(),
+                            viewModel = viewModel,
                             onSettingsClick = { showSettings = true }
                         )
                     }
