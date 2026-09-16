@@ -36,9 +36,11 @@ AI providers are hidden behind an `AiProvider` abstraction so the UI and busines
 5. Configurable translation language
 6. Translation shown below the reply
 7. Copy and share actions
-8. Local history
-9. Online/offline provider abstraction
-10. Model/provider settings foundation
+8. Local Room-backed reply history
+9. Expandable history items with copy, share and delete actions
+10. Online/offline provider abstraction
+11. AI provider and model settings
+12. Downloadable offline model management
 
 ## Development principles
 
@@ -50,5 +52,7 @@ AI providers are hidden behind an `AiProvider` abstraction so the UI and busines
 - Consistent formatting and naming.
 - Unit tests for domain/business logic.
 - Secrets/API keys must never be committed to source control.
+- Provider credentials must be stored using Android secure storage.
+- Local persistence must be accessed through domain repository contracts.
 
 See [`docs/SKILLS.md`](docs/SKILLS.md) for the project development rules.
