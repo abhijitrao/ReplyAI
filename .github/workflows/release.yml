@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'develop' || github.ref }}
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
