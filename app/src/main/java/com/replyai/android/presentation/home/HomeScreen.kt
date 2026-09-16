@@ -35,7 +35,8 @@ import com.replyai.android.domain.model.Tone
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel
+    viewModel: HomeViewModel,
+    onSettingsClick: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -44,7 +45,8 @@ fun HomeScreen(
         onInputChanged = viewModel::updateInput,
         onToneChanged = viewModel::updateTone,
         onLengthChanged = viewModel::updateResponseLength,
-        onGenerate = viewModel::generate
+        onGenerate = viewModel::generate,
+        onSettingsClick = onSettingsClick
     )
 }
 
@@ -54,7 +56,8 @@ private fun HomeContent(
     onInputChanged: (String) -> Unit,
     onToneChanged: (Tone) -> Unit,
     onLengthChanged: (ResponseLength) -> Unit,
-    onGenerate: () -> Unit
+    onGenerate: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -63,16 +66,23 @@ private fun HomeContent(
             .padding(horizontal = 20.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "ReplyAI",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "ReplyAI",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Say it naturally. Reply professionally.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
 
-        Text(
-            text = "Say it naturally. Reply professionally.",
-            style = MaterialTheme.typography.bodyMedium
-        )
+            TextButton(onClick = onSettingsClick) {
+                Text("Settings")
+            }
+        }
 
         Text(
             text = "What do you want to say?",
