@@ -4,6 +4,8 @@ import com.replyai.android.data.security.SecureSecretStore
 import com.replyai.android.domain.ai.AiProvider
 import com.replyai.android.domain.model.CommunicationRequest
 import com.replyai.android.domain.model.GeneratedReply
+import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -19,14 +21,21 @@ class OpenAiAiProvider(
         val apiKey = secureSecretStore.get(API_KEY_NAME)
             ?: throw IllegalStateException("OpenAI API key is not configured")
 
-        val connection = (URL(RESPONSES_URL).openConnection() as HttpURLConnection).apply {
-            requestMethod = "POST"
-            connectTimeout = CONNECT_TIMEOUT_MS
-            readTimeout = READ_TIMEOUT_MS
-            doOutput = true
-            setRequestProperty("Authorization", "Bearer $apiKey")
-            setRequestProperty("Content-Type", "application/json")
-            setRequestProperty("Accept", "application/json")
+        val connection = try {
+            (URL(RESPONSES_URL).openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                connectTimeout = CONNECT_TIMEOUT_MS
+                readTimeout = READ_TIMEOUT_MS
+                doOutput = true
+                setRequestProperty("Authorization", "Bearer $apiKey")
+                setRequestProperty("Content-Type", "application/json")
+                setRequestProperty("Accept", "application/json")
+            }
+        } catch (error: IOException) {
+            throw IOException(
+                "Unable to connect to OpenAI. Check your internet connection and try again.",
+                error
+            )
         }
 
         try {
@@ -43,10 +52,23 @@ class OpenAiAiProvider(
             }
 
             if (responseCode !in 200..299) {
-                throw IOException("OpenAI request failed ($responseCode): ${extractError(responseBody)}")
+                throw IOException(formatHttpError(responseCode, responseBody))
             }
 
             return parseResponse(responseBody)
+        } catch (error: IOException) {
+            throw error
+        } catch (error: JSONException) {
+            throw IOException(
+                "OpenAI returned an unexpected response format. Please try again.",
+                error
+            )
+        } catch (error: Exception) {
+            throw IOException(
+                error.message?.takeIf { it.isNotBlank() }
+                    ?: "OpenAI request failed. Please try again.",
+                error
+            )
         } finally {
             connection.disconnect()
         }
@@ -104,7 +126,7 @@ class OpenAiAiProvider(
         )
     }
 
-    private fun findText(value: org.json.JSONArray?): String? {
+    private fun findText(value: JSONArray?): String? {
         if (value == null) return null
 
         for (index in 0 until value.length()) {
@@ -119,13 +141,33 @@ class OpenAiAiProvider(
         return null
     }
 
-    private fun extractError(responseBody: String): String {
-        return runCatching {
+    private fun formatHttpError(responseCode: Int, responseBody: String): String {
+        val apiMessage = runCatching {
             JSONObject(responseBody)
                 .optJSONObject("error")
                 ?.optString("message")
                 ?.takeIf { it.isNotBlank() }
-        }.getOrNull() ?: "Unknown error"
+        }.getOrNull()
+
+        return when (responseCode) {
+            HttpURLConnection.HTTP_UNAUTHORIZED ->
+                "OpenAI API key is invalid or unauthorized. Check the API key in Settings."
+
+            HttpURLConnection.HTTP_FORBIDDEN ->
+                "OpenAI rejected the request. Check your API access and account permissions."
+
+            HttpURLConnection.HTTP_BAD_REQUEST ->
+                "OpenAI rejected the request (400): ${apiMessage ?: "Invalid request or model."}"
+
+            HTTP_TOO_MANY_REQUESTS ->
+                "OpenAI rate limit or quota reached (429): ${apiMessage ?: "Please check your API usage and billing."}"
+
+            in 500..599 ->
+                "OpenAI service error ($responseCode). Please try again shortly."
+
+            else ->
+                "OpenAI request failed ($responseCode): ${apiMessage ?: "Unknown error."}"
+        }
     }
 
     private companion object {
@@ -134,5 +176,6 @@ class OpenAiAiProvider(
         const val DEFAULT_MODEL = "gpt-5.6-luna"
         const val CONNECT_TIMEOUT_MS = 15_000
         const val READ_TIMEOUT_MS = 60_000
+        const val HTTP_TOO_MANY_REQUESTS = 429
     }
 }
