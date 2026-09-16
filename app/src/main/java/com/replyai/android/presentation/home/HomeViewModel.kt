@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.replyai.android.domain.model.CommunicationRequest
 import com.replyai.android.domain.model.GeneratedReply
+import com.replyai.android.domain.model.ReplyHistoryItem
 import com.replyai.android.domain.model.ResponseLength
 import com.replyai.android.domain.model.Tone
 import com.replyai.android.domain.usecase.GenerateReplyUseCase
+import com.replyai.android.domain.usecase.SaveReplyHistoryUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +24,8 @@ data class HomeUiState(
 )
 
 class HomeViewModel(
-    private val generateReply: GenerateReplyUseCase
+    private val generateReply: GenerateReplyUseCase,
+    private val saveReplyHistory: SaveReplyHistoryUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -69,6 +72,20 @@ class HomeViewModel(
                     isGenerating = false,
                     generatedReply = result
                 )
+
+                runCatching {
+                    saveReplyHistory(
+                        ReplyHistoryItem(
+                            id = 0,
+                            inputText = state.inputText.trim(),
+                            reply = result.reply,
+                            translation = result.translation,
+                            tone = state.tone,
+                            responseLength = state.responseLength,
+                            createdAt = System.currentTimeMillis()
+                        )
+                    )
+                }
             }.onFailure { error ->
                 _uiState.value = _uiState.value.copy(
                     isGenerating = false,
