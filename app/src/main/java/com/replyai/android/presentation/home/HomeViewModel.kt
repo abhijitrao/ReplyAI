@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.IOException
 
 data class HomeUiState(
     val inputText: String = "",
@@ -98,6 +99,8 @@ class HomeViewModel(
     private fun Throwable.toUserMessage(): String = when (this) {
         is IllegalStateException -> message ?: "AI configuration is incomplete."
         is UnsupportedOperationException -> message ?: "The selected AI provider is unavailable."
+        is IOException -> message?.takeIf { it.isNotBlank() }
+            ?: "The AI service could not be reached. Please check your connection and AI settings."
         else -> "Unable to generate a reply. Please check your connection and AI settings."
     }
 }
