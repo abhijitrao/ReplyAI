@@ -2,7 +2,6 @@ package com.replyai.android.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.replyai.android.data.ai.PreviewAiProvider
 import com.replyai.android.domain.model.CommunicationRequest
 import com.replyai.android.domain.model.GeneratedReply
 import com.replyai.android.domain.model.ResponseLength
@@ -22,11 +21,11 @@ data class HomeUiState(
     val errorMessage: String? = null
 )
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(
+    private val generateReply: GenerateReplyUseCase
+) : ViewModel() {
 
-    private val generateReply = GenerateReplyUseCase(PreviewAiProvider())
     private val _uiState = MutableStateFlow(HomeUiState())
-
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     fun updateInput(value: String) {
@@ -52,7 +51,10 @@ class HomeViewModel : ViewModel() {
         }
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isGenerating = true, errorMessage = null)
+            _uiState.value = _uiState.value.copy(
+                isGenerating = true,
+                errorMessage = null
+            )
 
             runCatching {
                 generateReply(
