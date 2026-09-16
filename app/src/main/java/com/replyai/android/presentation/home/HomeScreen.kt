@@ -1,5 +1,8 @@
 package com.replyai.android.presentation.home
 
+import android.content.ClipData
+import android.content.Context
+import android.content.ClipboardManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,12 +29,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.replyai.android.domain.model.GeneratedReply
 import com.replyai.android.domain.model.ResponseLength
 import com.replyai.android.domain.model.Tone
+import com.replyai.android.presentation.common.ShareText
 
 @Composable
 fun HomeScreen(
@@ -59,6 +65,8 @@ private fun HomeContent(
     onGenerate: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
+    val context = LocalContext.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -145,8 +153,9 @@ private fun HomeContent(
 
         state.generatedReply?.let { reply ->
             ReplyCard(
-                reply = reply.reply,
-                translation = reply.translation
+                generatedReply = reply,
+                onCopy = { copyToClipboard(context, reply.reply) },
+                onShare = { ShareText.share(context, reply.reply) }
             )
         }
     }
@@ -193,8 +202,9 @@ private fun <T> SelectionMenu(
 
 @Composable
 private fun ReplyCard(
-    reply: String,
-    translation: String
+    generatedReply: GeneratedReply,
+    onCopy: () -> Unit,
+    onShare: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -207,25 +217,33 @@ private fun ReplyCard(
         )
 
         Text(
-            text = reply,
+            text = generatedReply.reply,
             style = MaterialTheme.typography.bodyLarge
         )
 
-        Text(
-            text = translation,
-            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        if (generatedReply.translation.isNotBlank()) {
+            Text(
+                text = generatedReply.translation,
+                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
         Row {
-            TextButton(onClick = { /* Copy action will be wired next. */ }) {
+            TextButton(onClick = onCopy) {
                 Text("Copy")
             }
-            TextButton(onClick = { /* Share action will be wired next. */ }) {
+            TextButton(onClick = onShare) {
                 Text("Share")
             }
         }
     }
+}
+
+private fun copyToClipboard(context: Context, text: String) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+        ?: return
+    clipboard.setPrimaryClip(ClipData.newPlainText("ReplyAI reply", text))
 }
 
 private fun Tone.label(): String = when (this) {
