@@ -15,6 +15,10 @@ enum class OnlineProvider {
 data class AiSettings(
     val mode: AiMode = AiMode.AUTOMATIC,
     val onlineProvider: OnlineProvider = OnlineProvider.OPENAI,
-    val onlineModel: String = "",
+    val onlineModel: String = DEFAULT_ONLINE_MODEL,
     val offlineModelId: String? = null
-)
+) {
+    companion object {
+        const val DEFAULT_ONLINE_MODEL = "gpt-5.6-luna"
+    }
+}
