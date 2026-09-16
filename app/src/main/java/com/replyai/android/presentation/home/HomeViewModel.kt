@@ -72,9 +72,15 @@ class HomeViewModel(
             }.onFailure { error ->
                 _uiState.value = _uiState.value.copy(
                     isGenerating = false,
-                    errorMessage = error.message ?: "Unable to generate a reply."
+                    errorMessage = error.toUserMessage()
                 )
             }
         }
+    }
+
+    private fun Throwable.toUserMessage(): String = when (this) {
+        is IllegalStateException -> message ?: "AI configuration is incomplete."
+        is UnsupportedOperationException -> message ?: "The selected AI provider is unavailable."
+        else -> "Unable to generate a reply. Please check your connection and AI settings."
     }
 }
