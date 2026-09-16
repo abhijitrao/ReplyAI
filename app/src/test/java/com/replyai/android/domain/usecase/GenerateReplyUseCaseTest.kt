@@ -30,14 +30,10 @@ class GenerateReplyUseCaseTest {
         val useCase = GenerateReplyUseCase(FakeAiProvider())
 
         assertThrows(IllegalArgumentException::class.java) {
-            runBlockingTest {
+            kotlinx.coroutines.runBlocking {
                 useCase(CommunicationRequest(inputText = "   "))
             }
         }
-    }
-
-    private fun runBlockingTest(block: suspend () -> Unit) {
-        kotlinx.coroutines.runBlocking { block() }
     }
 
     private class FakeAiProvider(
