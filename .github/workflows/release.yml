@@ -48,11 +48,16 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: gradle assembleRelease
 
+      - name: Rename release APK
+        run: |
+          mv app/build/outputs/apk/release/app-release.apk \
+            "app/build/outputs/apk/release/ReplyAI-v${{ github.event_name == 'push' && '0.3.0' || '0.3.0' }}-${{ github.run_number }}.apk"
+
       - name: Upload release APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: replyai-release-apk
-          path: app/build/outputs/apk/release/app-release.apk
+          name: replyai-release-v0.3.0-${{ github.run_number }}
+          path: app/build/outputs/apk/release/ReplyAI-v0.3.0-${{ github.run_number }}.apk
           if-no-files-found: error
 
       - name: Create GitHub release for tag build
@@ -61,7 +66,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" \
-            app/build/outputs/apk/release/app-release.apk \
+            app/build/outputs/apk/release/ReplyAI-v0.3.0-${{ github.run_number }}.apk \
             --generate-notes \
             --title "ReplyAI $GITHUB_REF_NAME"
 
