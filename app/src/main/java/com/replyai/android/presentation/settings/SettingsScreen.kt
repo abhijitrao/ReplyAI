@@ -9,10 +9,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -20,20 +22,27 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.replyai.android.domain.model.AiMode
 import com.replyai.android.domain.model.OnlineProvider
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onBack: () -> Unit
 ) {
     val settings by viewModel.aiSettings.collectAsState()
+    val isApiKeyConfigured by viewModel.isOpenAiApiKeyConfigured.collectAsState()
+    var apiKey by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -88,13 +97,73 @@ fun SettingsScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            if (settings.onlineProvider == OnlineProvider.OPENAI) {
+                HorizontalDivider()
 
-            Text(
-                text = "Model configuration will be connected to the provider in the next integration step.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+                Text(
+                    text = "OpenAI configuration",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                OutlinedTextField(
+                    value = settings.onlineModel,
+                    onValueChange = viewModel::updateOnlineModel,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Model") },
+                    singleLine = true,
+                    placeholder = { Text("e.g. gpt-5.6-luna") }
+                )
+
+                OutlinedTextField(
+                    value = apiKey,
+                    onValueChange = { apiKey = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("API key") },
+                    placeholder = {
+                        Text(if (isApiKeyConfigured) "API key is securely stored" else "Enter API key")
+                    },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            viewModel.saveOpenAiApiKey(apiKey)
+                            apiKey = ""
+                        },
+                        enabled = apiKey.isNotBlank()
+                    ) {
+                        Text("Save key")
+                    }
+
+                    TextButton(
+                        onClick = {
+                            viewModel.clearOpenAiApiKey()
+                            apiKey = ""
+                        },
+                        enabled = isApiKeyConfigured
+                    ) {
+                        Text("Clear key")
+                    }
+                }
+
+                Text(
+                    text = if (isApiKeyConfigured) {
+                        "API key is stored using Android Keystore-backed encryption."
+                    } else {
+                        "Your API key is not stored in plain text or source code."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
         }
     }
 }
