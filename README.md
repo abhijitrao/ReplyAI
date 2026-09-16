@@ -38,7 +38,8 @@ AI providers are hidden behind an `AiProvider` abstraction so the UI and busines
 7. Copy and share actions
 8. Local history
 9. Online/offline provider abstraction
-10. Model/provider settings foundation
+10. AI provider and model settings
+11. Downloadable offline model management
 
 ## Development principles
 
@@ -50,5 +51,6 @@ AI providers are hidden behind an `AiProvider` abstraction so the UI and busines
 - Consistent formatting and naming.
 - Unit tests for domain/business logic.
 - Secrets/API keys must never be committed to source control.
+- Provider credentials must be stored using Android secure storage.
 
 See [`docs/SKILLS.md`](docs/SKILLS.md) for the project development rules.
