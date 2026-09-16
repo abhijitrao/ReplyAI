@@ -17,6 +17,35 @@ android {
         versionName = "0.3.0"
     }
 
+    signingConfigs {
+        create("release") {
+            val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+            val keystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            val keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+            val keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+
+            if (!keystorePath.isNullOrBlank()) {
+                storeFile = file(keystorePath)
+            }
+            if (!keystorePassword.isNullOrBlank()) {
+                storePassword = keystorePassword
+            }
+            if (!keyAlias.isNullOrBlank()) {
+                this.keyAlias = keyAlias
+            }
+            if (!keyPassword.isNullOrBlank()) {
+                this.keyPassword = keyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+        }
+    }
+
     buildFeatures {
         compose = true
     }
