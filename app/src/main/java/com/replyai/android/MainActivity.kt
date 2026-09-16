@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
                         )
                     } else {
                         val provider = remember(settings) {
-                            appContainer.aiProviderFactory.create(settings)
+                            appContainer.aiProviderResolver.resolve(settings)
                         }
                         val viewModel = remember(provider) {
                             HomeViewModel(GenerateReplyUseCase(provider))
