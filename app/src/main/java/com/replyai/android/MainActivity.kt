@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.replyai.android.data.security.SecureSecretStore
 import com.replyai.android.data.settings.SettingsRepository
 import com.replyai.android.presentation.home.HomeScreen
 import com.replyai.android.presentation.home.HomeViewModel
@@ -19,6 +20,7 @@ import com.replyai.android.ui.theme.ReplyAiTheme
 class MainActivity : ComponentActivity() {
 
     private val settingsRepository by lazy { SettingsRepository(applicationContext) }
+    private val secureSecretStore by lazy { SecureSecretStore(applicationContext) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +32,10 @@ class MainActivity : ComponentActivity() {
 
                     if (showSettings) {
                         SettingsScreen(
-                            viewModel = SettingsViewModel(settingsRepository),
+                            viewModel = SettingsViewModel(
+                                repository = settingsRepository,
+                                secureSecretStore = secureSecretStore
+                            ),
                             onBack = { showSettings = false }
                         )
                     } else {
