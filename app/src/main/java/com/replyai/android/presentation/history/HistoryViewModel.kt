@@ -7,6 +7,7 @@ import com.replyai.android.domain.usecase.DeleteReplyHistoryUseCase
 import com.replyai.android.domain.usecase.ObserveReplyHistoryUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -20,6 +21,7 @@ class HistoryViewModel(
 ) : ViewModel() {
 
     val uiState: StateFlow<HistoryUiState> = observeReplyHistory()
+        .map { items -> HistoryUiState(items = items) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
