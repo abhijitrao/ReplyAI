@@ -12,6 +12,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.replyai.android.data.AppContainer
 import com.replyai.android.domain.usecase.GenerateReplyUseCase
+import com.replyai.android.presentation.history.HistoryScreen
+import com.replyai.android.presentation.history.HistoryViewModel
 import com.replyai.android.presentation.home.HomeScreen
 import com.replyai.android.presentation.home.HomeViewModel
 import com.replyai.android.presentation.settings.SettingsScreen
@@ -29,31 +31,52 @@ class MainActivity : ComponentActivity() {
             ReplyAiTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     var showSettings by remember { mutableStateOf(false) }
+                    var showHistory by remember { mutableStateOf(false) }
                     val settings by appContainer.settingsRepository.aiSettings
                         .collectAsStateWithLifecycle()
 
-                    if (showSettings) {
-                        SettingsScreen(
-                            viewModel = remember {
-                                SettingsViewModel(
-                                    repository = appContainer.settingsRepository,
-                                    secureSecretStore = appContainer.secureSecretStore
-                                )
-                            },
-                            onBack = { showSettings = false }
-                        )
-                    } else {
-                        val provider = remember(settings) {
-                            appContainer.aiProviderResolver.resolve(settings)
-                        }
-                        val viewModel = remember(provider) {
-                            HomeViewModel(GenerateReplyUseCase(provider))
+                    when {
+                        showSettings -> {
+                            SettingsScreen(
+                                viewModel = remember {
+                                    SettingsViewModel(
+                                        repository = appContainer.settingsRepository,
+                                        secureSecretStore = appContainer.secureSecretStore
+                                    )
+                                },
+                                onBack = { showSettings = false }
+                            )
                         }
 
-                        HomeScreen(
-                            viewModel = viewModel,
-                            onSettingsClick = { showSettings = true }
-                        )
+                        showHistory -> {
+                            HistoryScreen(
+                                viewModel = remember {
+                                    HistoryViewModel(
+                                        observeReplyHistory = appContainer.observeReplyHistoryUseCase,
+                                        deleteReplyHistory = appContainer.deleteReplyHistoryUseCase
+                                    )
+                                },
+                                onBack = { showHistory = false }
+                            )
+                        }
+
+                        else -> {
+                            val provider = remember(settings) {
+                                appContainer.aiProviderResolver.resolve(settings)
+                            }
+                            val viewModel = remember(provider) {
+                                HomeViewModel(
+                                    generateReply = GenerateReplyUseCase(provider),
+                                    saveReplyHistory = appContainer.saveReplyHistoryUseCase
+                                )
+                            }
+
+                            HomeScreen(
+                                viewModel = viewModel,
+                                onSettingsClick = { showSettings = true },
+                                onHistoryClick = { showHistory = true }
+                            )
+                        }
                     }
                 }
             }
