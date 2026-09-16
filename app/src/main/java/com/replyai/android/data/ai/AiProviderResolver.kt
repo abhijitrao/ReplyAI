@@ -15,7 +15,7 @@ class AiProviderResolver(
     fun resolve(settings: AiSettings = settingsRepository.aiSettings.value): AiProvider {
         return when (settings.mode) {
             AiMode.ONLINE -> onlineProvider(settings)
-            AiMode.OFFLINE -> throw IllegalStateException(
+            AiMode.OFFLINE -> UnavailableAiProvider(
                 "Offline AI model is not configured yet."
             )
             AiMode.AUTOMATIC -> automaticProvider(settings)
@@ -26,7 +26,7 @@ class AiProviderResolver(
         return if (settings.onlineProviderSupportsConfiguration()) {
             onlineProvider(settings)
         } else {
-            throw IllegalStateException(
+            UnavailableAiProvider(
                 "Configure an online AI provider and API key in Settings."
             )
         }
@@ -36,7 +36,7 @@ class AiProviderResolver(
         return when (settings.onlineProvider) {
             OnlineProvider.OPENAI -> {
                 if (!settings.onlineProviderSupportsConfiguration()) {
-                    throw IllegalStateException(
+                    return UnavailableAiProvider(
                         "Configure your OpenAI API key in Settings."
                     )
                 }
@@ -48,7 +48,7 @@ class AiProviderResolver(
             }
 
             OnlineProvider.GEMINI,
-            OnlineProvider.CUSTOM -> throw UnsupportedOperationException(
+            OnlineProvider.CUSTOM -> UnavailableAiProvider(
                 "The selected online provider is not implemented yet."
             )
         }
